@@ -1,7 +1,13 @@
-FROM mcr.microsoft.com/azure-databases/data-api-builder:latest
-
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 WORKDIR /app
 
-COPY dab-config.json .
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
 
-CMD ["dab", "start", "--config", "dab-config.json"]
+COPY . .
+RUN dotnet publish Azure.DataApiBuilder.Service.csproj -c Release -o /app/publish
+
+FROM base AS final
+WORKDIR /app
+COPY --from=build /app/publish .
+ENTRYPOINT ["dotnet", "Azure.DataApiBuilder.Service.dll"]
